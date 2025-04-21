@@ -67,7 +67,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     import os
-    TOKEN = os.getenv("BOT_TOKEN")
+    TOKEN = os.getenv("7932050859:AAGmeOewg1CImRPmEICwvtnJb5LRuY8zeMo")
     app = ApplicationBuilder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
