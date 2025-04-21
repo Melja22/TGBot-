@@ -3,7 +3,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackContext, filters, ConversationHandler
 
 # Заменить на свой ID — бот будет отправлять тебе ответы сюда
-ADMIN_ID = 123456789  # твой Telegram ID
+ADMIN_ID = 301661957  # твой Telegram ID
 
 # Этапы диалога
 QUESTION1, QUESTION2, POLL, PHONE = range(4)
