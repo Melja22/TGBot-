@@ -1,25 +1,17 @@
 import logging
 import os
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import (
-    ApplicationBuilder, CommandHandler, MessageHandler,
-    ConversationHandler, ContextTypes, filters
-)
+from telegram.ext import Application, CommandHandler, MessageHandler, ConversationHandler, filters
 
-# Твой Telegram ID
+# Подключаем данные и настройки
 ADMIN_ID = 301661957
 
-# Этапы диалога
-QUESTION1, QUESTION2, POLL, PHONE = range(4)
-
-# Временное хранилище
+QUESTION1, QUESTION2, POLL, CONFIRM, PHONE = range(5)
 user_data = {}
 
-# Логирование
 logging.basicConfig(level=logging.INFO)
 
-# Стартовая команда
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# /start
+async def start(update, context):
     user_id = update.effective_user.id
     if user_id in user_data:
         await update.message.reply_text(
@@ -34,14 +26,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return QUESTION1
 
 # Интерес
-async def question1(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def question1(update, context):
     user_id = update.effective_user.id
     user_data[user_id]['interest'] = update.message.text
     await update.message.reply_text("Какой город?")
     return QUESTION2
 
 # Город
-async def question2(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def question2(update, context):
     user_id = update.effective_user.id
     user_data[user_id]['city'] = update.message.text
 
@@ -53,7 +45,7 @@ async def question2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return POLL
 
 # Бюджет
-async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def poll(update, context):
     user_id = update.effective_user.id
     user_data[user_id]['budget'] = update.message.text
 
@@ -73,7 +65,7 @@ async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return PHONE
 
 # Телефон
-async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def phone(update, context):
     user_id = update.effective_user.id
     contact = update.message.contact.phone_number if update.message.contact else update.message.text
     user_data[user_id]['phone'] = contact
@@ -98,16 +90,16 @@ async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 # Отмена
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cancel(update, context):
     user_id = update.effective_user.id
     user_data.pop(user_id, None)
     await update.message.reply_text("Диалог прерван.")
     return ConversationHandler.END
 
 # Основной запуск
-async def main():
+async def start_bot():
     TOKEN = os.getenv("BOT_TOKEN")
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
@@ -123,33 +115,9 @@ async def main():
     app.add_handler(conv_handler)
 
     logging.info("Бот запущен...")
-    # Используем run_polling() для работы с циклом событий в уже работающем процессе
     await app.run_polling()
 
 if __name__ == '__main__':
-    from telegram.ext import Application
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-
-    async def start_bot():
-        TOKEN = os.getenv("BOT_TOKEN")
-        app = Application.builder().token(TOKEN).build()
-
-        conv_handler = ConversationHandler(
-            entry_points=[CommandHandler("start", start)],
-            states={
-                QUESTION1: [MessageHandler(filters.TEXT & ~filters.COMMAND, question1)],
-                QUESTION2: [MessageHandler(filters.TEXT & ~filters.COMMAND, question2)],
-                POLL: [MessageHandler(filters.TEXT & ~filters.COMMAND, poll)],
-                PHONE: [MessageHandler(filters.CONTACT | (filters.TEXT & ~filters.COMMAND), phone)],
-            },
-            fallbacks=[CommandHandler("cancel", cancel)],
-        )
-
-        app.add_handler(conv_handler)
-
-        logging.info("Бот запущен...")
-        await app.run_polling()
-
-    start_bot()
+    # Запуск бота
+    import asyncio
+    asyncio.run(start_bot())
