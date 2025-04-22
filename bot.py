@@ -6,14 +6,19 @@ from telegram.ext import (
     ConversationHandler, ContextTypes, filters
 )
 
+# Твой Telegram ID
 ADMIN_ID = 301661957
 
-QUESTION1, QUESTION2, POLL, CONFIRM, PHONE = range(5)
+# Этапы диалога
+QUESTION1, QUESTION2, POLL, PHONE = range(4)
+
+# Временное хранилище
 user_data = {}
 
+# Логирование
 logging.basicConfig(level=logging.INFO)
 
-# /start
+# Стартовая команда
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id in user_data:
@@ -118,12 +123,7 @@ async def main():
     app.add_handler(conv_handler)
 
     logging.info("Бот запущен...")
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling()
-    await app.updater.idle()
-    await app.stop()
-    await app.shutdown()
+    await app.run_polling()
 
 if __name__ == '__main__':
     import asyncio
