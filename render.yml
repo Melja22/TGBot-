@@ -6,4 +6,4 @@ services:
     startCommand: "python bot.py"
     envVars:
       - key: BOT_TOKEN
-        value: "7815093031:AAE-jXo9-g-VtwMyB74EEkkClmBJ1WjH50c"
+        value: "7879236756:AAGTqMP39lSnV14r9jfMDwFtgwyptwFqmUo"
