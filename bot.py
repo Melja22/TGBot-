@@ -127,5 +127,29 @@ async def main():
     await app.run_polling()
 
 if __name__ == '__main__':
-    import asyncio
-    asyncio.run(main())
+    from telegram.ext import Application
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+
+    async def start_bot():
+        TOKEN = os.getenv("BOT_TOKEN")
+        app = Application.builder().token(TOKEN).build()
+
+        conv_handler = ConversationHandler(
+            entry_points=[CommandHandler("start", start)],
+            states={
+                QUESTION1: [MessageHandler(filters.TEXT & ~filters.COMMAND, question1)],
+                QUESTION2: [MessageHandler(filters.TEXT & ~filters.COMMAND, question2)],
+                POLL: [MessageHandler(filters.TEXT & ~filters.COMMAND, poll)],
+                PHONE: [MessageHandler(filters.CONTACT | (filters.TEXT & ~filters.COMMAND), phone)],
+            },
+            fallbacks=[CommandHandler("cancel", cancel)],
+        )
+
+        app.add_handler(conv_handler)
+
+        logging.info("Бот запущен...")
+        await app.run_polling()
+
+    start_bot()
