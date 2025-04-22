@@ -123,6 +123,7 @@ async def main():
     app.add_handler(conv_handler)
 
     logging.info("Бот запущен...")
+    # Используем run_polling() для работы с циклом событий в уже работающем процессе
     await app.run_polling()
 
 if __name__ == '__main__':
