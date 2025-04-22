@@ -18,19 +18,19 @@ user_data = {}
 logging.basicConfig(level=logging.INFO)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Привет! Давай начнём. Напиши, пожалуйста, чем ты интересуешься?")
+    await update.message.reply_text("Привет! Давай начнём. Напиши, пожалуйста, что тебя интересует ? /(Покупка/аренда квартиры/дома)")
     return QUESTION1
 
 async def question1(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_data[update.effective_user.id] = {'interest': update.message.text}
-    await update.message.reply_text("Спасибо! А теперь скажи, сколько у тебя свободного времени в день?")
+    await update.message.reply_text("Какой город ?")
     return QUESTION2
 
 async def question2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_data[update.effective_user.id]['time'] = update.message.text
-    reply_keyboard = [["Утром", "Днём", "Вечером"]]
+    reply_keyboard = ["До 1000€", "До 2000€", "От 2000€"]
     await update.message.reply_text(
-        "Когда тебе удобно выходить на связь?",
+        "Какой бюджет ?",
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True)
     )
     return POLL
