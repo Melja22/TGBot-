@@ -6,36 +6,40 @@ from telegram.ext import (
     ConversationHandler, ContextTypes, filters
 )
 
-# Твой Telegram ID
 ADMIN_ID = 301661957
 
-# Этапы диалога
-QUESTION1, QUESTION2, POLL, PHONE = range(4)
-
-# Временное хранилище
+QUESTION1, QUESTION2, POLL, CONFIRM, PHONE = range(5)
 user_data = {}
 
-# Логирование
 logging.basicConfig(level=logging.INFO)
 
-# Стартовая команда
+# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id in user_data:
+        await update.message.reply_text(
+            "Ты уже начал диалог. Напиши /cancel, если хочешь начать заново."
+        )
+        return ConversationHandler.END
+
+    user_data[user_id] = {}
     await update.message.reply_text(
         "Привет! Давай начнём. Напиши, пожалуйста, что тебя интересует? (Покупка/аренда квартиры/дома)"
     )
     return QUESTION1
 
-# Ответ на первый вопрос
+# Интерес
 async def question1(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    user_data[user_id] = {'interest': update.message.text}
+    user_data[user_id]['interest'] = update.message.text
     await update.message.reply_text("Какой город?")
     return QUESTION2
 
-# Ответ на второй вопрос
+# Город
 async def question2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_data[user_id]['city'] = update.message.text
+
     reply_keyboard = [["До 1000€", "До 2000€", "От 2000€"]]
     await update.message.reply_text(
         "Какой бюджет?",
@@ -43,27 +47,37 @@ async def question2(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     return POLL
 
-# Выбор бюджета
+# Бюджет
 async def poll(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_data[user_id]['budget'] = update.message.text
+
+    data = user_data[user_id]
+    summary = (
+        f"Вот что ты указал:\n\n"
+        f"🧠 Интерес: {data['interest']}\n"
+        f"🏙 Город: {data['city']}\n"
+        f"💶 Бюджет: {data['budget']}\n\n"
+        "Если всё верно, отправь номер телефона для связи:"
+    )
+
     contact_button = KeyboardButton("Отправить номер телефона", request_contact=True)
     reply_markup = ReplyKeyboardMarkup([[contact_button]], one_time_keyboard=True, resize_keyboard=True)
-    await update.message.reply_text(
-        "Окей! Остался только номер телефона для связи:",
-        reply_markup=reply_markup
-    )
+    await update.message.reply_text(summary, reply_markup=reply_markup)
+
     return PHONE
 
-# Получение телефона
+# Телефон
 async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     contact = update.message.contact.phone_number if update.message.contact else update.message.text
     user_data[user_id]['phone'] = contact
 
     data = user_data[user_id]
+
+    username = update.effective_user.username or update.effective_user.first_name or "Неизвестно"
     text = (
-        f"📥 Новый ответ от @{update.effective_user.username or 'Неизвестно'}:\n\n"
+        f"📥 Новый ответ от @{username}:\n\n"
         f"🧠 Интересуется: {data['interest']}\n"
         f"🏙 Город: {data['city']}\n"
         f"💶 Бюджет: {data['budget']}\n"
@@ -72,14 +86,20 @@ async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_message(chat_id=ADMIN_ID, text=text)
     await update.message.reply_text("Спасибо! Мы скоро с тобой свяжемся 💬")
+
+    # Удаляем данные пользователя после завершения
+    user_data.pop(user_id, None)
+
     return ConversationHandler.END
 
 # Отмена
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    user_data.pop(user_id, None)
     await update.message.reply_text("Диалог прерван.")
     return ConversationHandler.END
 
-# Запуск бота
+# Основной запуск
 async def main():
     TOKEN = os.getenv("BOT_TOKEN")
     app = ApplicationBuilder().token(TOKEN).build()
@@ -105,7 +125,6 @@ async def main():
     await app.stop()
     await app.shutdown()
 
-# Для запуска через asyncio
 if __name__ == '__main__':
     import asyncio
     asyncio.run(main())
